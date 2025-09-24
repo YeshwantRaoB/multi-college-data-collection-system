@@ -740,7 +740,7 @@
     const state = {
         currentUser: null,
         token: localStorage.getItem('token'),
-        apiBaseUrl: '/api'
+        apiBaseUrl: '/.netlify/functions'
     };
 
     // DOM Elements
@@ -843,7 +843,7 @@
     // Verify token on page load
     async function verifyToken() {
         try {
-            const data = await api.get('/auth/verify');
+            const data = await api.get('/verify');
             state.currentUser = data.user;
             showDashboard();
         } catch (error) {
@@ -861,7 +861,7 @@
         
         try {
             showLoading('Logging in...');
-            const data = await api.post('/auth/login', { username, password });
+            const data = await api.post('/login', { username, password });
             
             state.token = data.token;
             state.currentUser = data.user;
@@ -998,7 +998,7 @@
     // Change password
     async function changePassword(currentPassword, newPassword) {
         try {
-            await api.post('/auth/change-password', { currentPassword, newPassword });
+            await api.post('/change-password', { currentPassword, newPassword });
             alert('Password changed successfully!');
         } catch (error) {
             alert('Error changing password: ' + error.message);
@@ -1325,7 +1325,7 @@
         if (!newPassword) return;
         
         try {
-            await api.post('/auth/reset-password', { username, newPassword });
+            await api.post('/reset-password', { username, newPassword });
             alert('Password reset successfully!');
         } catch (error) {
             alert('Error resetting password: ' + error.message);
