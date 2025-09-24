@@ -1,0 +1,12 @@
+{
+  "name": "college-data-system",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "cd backend && npm run dev",
+    "start": "cd backend && npm start",
+    "build": "echo 'No build step required'"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}
