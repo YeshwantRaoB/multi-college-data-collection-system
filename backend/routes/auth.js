@@ -3,42 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 const router = express.Router();
-
-// Simple middleware functions (temporary - we'll fix the import issue later)
-const auth = async (req, res, next) => {
-    try {
-        const token = req.header('Authorization')?.replace('Bearer ', '');
-        
-        if (!token) {
-            return res.status(401).json({ message: 'No token, authorization denied' });
-        }
-
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.userId).select('-password');
-        
-        if (!user) {
-            return res.status(401).json({ message: 'Token is not valid' });
-        }
-
-        req.user = user;
-        next();
-    } catch (error) {
-        res.status(401).json({ message: 'Token is not valid' });
-    }
-};
-
-const adminAuth = async (req, res, next) => {
-    try {
-        await auth(req, res, () => {
-            if (req.user.role !== 'admin') {
-                return res.status(403).json({ message: 'Access denied. Admin rights required.' });
-            }
-            next();
-        });
-    } catch (error) {
-        res.status(401).json({ message: 'Authentication failed' });
-    }
-};
+const { auth } = require('../middleware/auth');
 
 // Login route
 router.post('/login', async (req, res) => {
@@ -97,6 +62,62 @@ router.get('/verify', auth, async (req, res) => {
             }
         });
     } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Change password (admin only)
+router.post('/change-password', auth, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ message: 'Current password and new password are required' });
+        }
+
+        // Verify current password
+        const isMatch = await req.user.comparePassword(currentPassword);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Current password is incorrect' });
+        }
+
+        // Update password
+        req.user.password = newPassword;
+        await req.user.save();
+
+        res.json({ message: 'Password changed successfully' });
+    } catch (error) {
+        console.error('Change password error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Reset user password (admin only)
+router.post('/reset-password', auth, async (req, res) => {
+    try {
+        const { username, newPassword } = req.body;
+
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Access denied. Admin rights required.' });
+        }
+
+        if (!username || !newPassword) {
+            return res.status(400).json({ message: 'Username and new password are required' });
+        }
+
+        // Find user
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Update password
+        user.password = newPassword;
+        await user.save();
+
+        res.json({ message: 'Password reset successfully' });
+    } catch (error) {
+        console.error('Reset password error:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });

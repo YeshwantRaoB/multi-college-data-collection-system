@@ -57,6 +57,10 @@ const collegeSchema = new mongoose.Schema({
         required: true,
         min: 0
     },
+    deputationToCollegeCode: {
+        type: String,
+        trim: true
+    },
     remarks: {
         type: String,
         trim: true
@@ -75,7 +79,7 @@ const collegeSchema = new mongoose.Schema({
 
 // Calculate vacant positions before saving
 collegeSchema.pre('save', function(next) {
-    this.vacant = this.sanctioned - this.working;
+    this.vacant = this.sanctioned - this.working - this.deputation;
     next();
 });
 

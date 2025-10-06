@@ -108,6 +108,7 @@ router.get('/export/excel', auth, async (req, res) => {
             'Working': college.working,
             'Vacant': college.vacant,
             'Deputation': college.deputation,
+            'Deputation to College Code': college.deputationToCollegeCode,
             'Remarks': college.remarks,
             'Last Updated': college.lastUpdated
         }));
@@ -178,13 +179,14 @@ router.get('/export/pdf', auth, async (req, res) => {
             college.sanctioned.toString(),
             college.working.toString(),
             college.vacant.toString(),
-            college.deputation.toString()
+            college.deputation.toString(),
+            college.deputationToCollegeCode || ''
         ]);
         
         // Add table
         doc.autoTable({
             startY: 40,
-            head: [['Code', 'Name', 'District', 'Taluk', 'Designation', 'Sanctioned', 'Working', 'Vacant', 'Deputation']],
+            head: [['Code', 'Name', 'District', 'Taluk', 'Designation', 'Sanctioned', 'Working', 'Vacant', 'Deputation', 'Deputation To']],
             body: tableData,
             styles: { fontSize: 8 },
             headStyles: { fillColor: [41, 128, 185] }

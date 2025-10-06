@@ -50,6 +50,7 @@ router.post('/', adminAuth, async (req, res) => {
             sanctioned,
             working,
             deputation,
+            deputationToCollegeCode,
             remarks
         } = req.body;
 
@@ -70,6 +71,7 @@ router.post('/', adminAuth, async (req, res) => {
             sanctioned,
             working,
             deputation,
+            deputationToCollegeCode,
             remarks,
             updatedBy: req.user._id
         });
@@ -112,7 +114,7 @@ router.put('/:collegeCode', auth, async (req, res) => {
         const updatedFields = {};
 
         // Define allowed fields for college users
-        const collegeUserAllowedFields = ['working', 'deputation'];
+        const collegeUserAllowedFields = ['working', 'deputation', 'deputationToCollegeCode'];
         
         Object.keys(req.body).forEach(field => {
             // Check if college user is trying to update non-allowed field

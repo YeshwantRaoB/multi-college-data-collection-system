@@ -42,9 +42,9 @@ router.post('/colleges', adminAuth, upload.single('file'), async (req, res) => {
 
         // Expected columns
         const expectedColumns = [
-            'College Code', 'College Name', 'District', 'Taluk', 
-            'Designation', 'Group', 'Branch', 'Sanctioned', 
-            'Working', 'Vacant', 'Deputation', 'Remarks'
+            'College Code', 'College Name', 'District', 'Taluk',
+            'Designation', 'Group', 'Branch', 'Sanctioned',
+            'Working', 'Vacant', 'Deputation', 'Deputation to College Code', 'Remarks'
         ];
 
         // Validate columns
@@ -93,6 +93,7 @@ router.post('/colleges', adminAuth, upload.single('file'), async (req, res) => {
                     working: parseInt(row['Working']) || 0,
                     vacant: parseInt(row['Vacant']) || 0,
                     deputation: parseInt(row['Deputation']) || 0,
+                    deputationToCollegeCode: row['Deputation to College Code'] || '',
                     remarks: row['Remarks'] || '',
                     updatedBy: req.user._id
                 });
@@ -231,6 +232,7 @@ router.get('/template/colleges', adminAuth, async (req, res) => {
             'Working': 45,
             'Vacant': 5,
             'Deputation': 2,
+            'Deputation to College Code': 'COL002',
             'Remarks': 'Sample remarks'
         }];
 
