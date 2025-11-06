@@ -28,19 +28,36 @@ const EditCollegeModal = ({ show, onHide, college, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    // Validate numeric fields
+    const working = parseInt(formData.working)
+    const deputation = parseInt(formData.deputation)
+    
+    if (isNaN(working) || working < 0) {
+      alert('Working must be a valid number (0 or greater)')
+      return
+    }
+    
+    if (isNaN(deputation) || deputation < 0) {
+      alert('Deputation must be a valid number (0 or greater)')
+      return
+    }
+    
     setLoading(true)
 
     try {
       await window.api.put(`/colleges/${college.collegeCode}`, {
-        working: parseInt(formData.working),
-        deputation: parseInt(formData.deputation),
+        working: working,
+        deputation: deputation,
         deputationToCollegeCode: formData.deputationToCollegeCode
       })
 
       onSuccess()
+      alert('College updated successfully!')
     } catch (error) {
       console.error('Error updating college:', error)
-      alert('Error updating college: ' + error.message)
+      const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred'
+      alert('Error updating college: ' + errorMessage)
     } finally {
       setLoading(false)
     }

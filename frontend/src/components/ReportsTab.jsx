@@ -81,17 +81,26 @@ const ReportsTab = () => {
       if (filters.designation) params.append('designation', filters.designation)
       if (filters.group) params.append('group', filters.group)
 
-      const response = await fetch(`/api/reports/export/excel?${params}`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
+      const response = await fetch(`${API_BASE_URL}/reports/export/excel?${params}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       })
 
       if (!response.ok) {
-        throw new Error('Export failed')
+        const errorText = await response.text()
+        console.error('Export error response:', errorText)
+        throw new Error('Export failed. Please try again.')
       }
 
       const blob = await response.blob()
+      
+      // Verify blob is valid
+      if (blob.size === 0) {
+        throw new Error('Generated file is empty')
+      }
+      
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -119,17 +128,26 @@ const ReportsTab = () => {
       if (filters.designation) params.append('designation', filters.designation)
       if (filters.group) params.append('group', filters.group)
 
-      const response = await fetch(`/api/reports/export/pdf?${params}`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
+      const response = await fetch(`${API_BASE_URL}/reports/export/pdf?${params}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       })
 
       if (!response.ok) {
-        throw new Error('Export failed')
+        const errorText = await response.text()
+        console.error('Export error response:', errorText)
+        throw new Error('Export failed. Please try again.')
       }
 
       const blob = await response.blob()
+      
+      // Verify blob is valid
+      if (blob.size === 0) {
+        throw new Error('Generated file is empty')
+      }
+      
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url

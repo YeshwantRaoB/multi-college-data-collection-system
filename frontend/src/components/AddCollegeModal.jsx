@@ -52,16 +52,22 @@ const AddCollegeModal = ({ show, onHide, onSuccess }) => {
       newErrors.branch = 'Branch is required'
     }
 
-    if (!formData.sanctioned || formData.sanctioned < 0) {
-      newErrors.sanctioned = 'Sanctioned must be a positive number'
+    if (formData.sanctioned === '' || formData.sanctioned === null || formData.sanctioned === undefined) {
+      newErrors.sanctioned = 'Sanctioned is required'
+    } else if (parseInt(formData.sanctioned) < 0 || isNaN(parseInt(formData.sanctioned))) {
+      newErrors.sanctioned = 'Sanctioned must be 0 or greater'
     }
 
-    if (!formData.working || formData.working < 0) {
-      newErrors.working = 'Working must be a positive number'
+    if (formData.working === '' || formData.working === null || formData.working === undefined) {
+      newErrors.working = 'Working is required'
+    } else if (parseInt(formData.working) < 0 || isNaN(parseInt(formData.working))) {
+      newErrors.working = 'Working must be 0 or greater'
     }
 
-    if (!formData.deputation || formData.deputation < 0) {
-      newErrors.deputation = 'Deputation must be a positive number'
+    if (formData.deputation === '' || formData.deputation === null || formData.deputation === undefined) {
+      newErrors.deputation = 'Deputation is required'
+    } else if (parseInt(formData.deputation) < 0 || isNaN(parseInt(formData.deputation))) {
+      newErrors.deputation = 'Deputation must be 0 or greater'
     }
 
     setErrors(newErrors)
@@ -118,7 +124,8 @@ const AddCollegeModal = ({ show, onHide, onSuccess }) => {
       setErrors({})
     } catch (error) {
       console.error('Error adding college:', error)
-      alert('Error adding college: ' + error.message)
+      const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred'
+      alert('Error adding college: ' + errorMessage)
     } finally {
       setLoading(false)
     }

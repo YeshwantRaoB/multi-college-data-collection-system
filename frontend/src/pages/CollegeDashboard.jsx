@@ -31,22 +31,46 @@ const CollegeDashboard = () => {
     }
   }
 
-  const updateField = async (fieldName, newValue) => {
+  const updateField = (fieldName, newValue) => {
+    // Update local state immediately for responsive UI
+    setCollegeData({
+      ...collegeData,
+      [fieldName]: newValue
+    })
+  }
+
+  const handleSaveChanges = async () => {
     try {
-      // Parse as integer for numeric fields, keep as string for text fields
-      const updateData = { 
-        [fieldName]: ['working', 'deputation'].includes(fieldName) 
-          ? parseInt(newValue) 
-          : newValue 
+      // Validate numeric fields
+      const working = parseInt(collegeData.working)
+      const deputation = parseInt(collegeData.deputation)
+      
+      if (isNaN(working) || working < 0) {
+        alert('Working must be a valid number (0 or greater)')
+        return
       }
+      
+      if (isNaN(deputation) || deputation < 0) {
+        alert('Deputation must be a valid number (0 or greater)')
+        return
+      }
+
+      const updateData = { 
+        working: working,
+        deputation: deputation,
+        deputationToCollegeCode: collegeData.deputationToCollegeCode || ''
+      }
+      
       await window.api.put(`/colleges/${collegeData.collegeCode}`, updateData)
 
-      // Reload data
+      // Reload data to get updated vacant value
       await loadCollegeData()
       alert('Data updated successfully!')
     } catch (error) {
       console.error('Error updating data:', error)
       alert('Error updating data: ' + (error.response?.data?.message || error.message))
+      // Reload data to reset to server state
+      await loadCollegeData()
     }
   }
 
@@ -164,6 +188,18 @@ const CollegeDashboard = () => {
                 </tr>
               </tbody>
             </table>
+          </div>
+        )}
+        
+        {collegeData && (
+          <div className="mt-3 d-flex justify-content-end">
+            <button 
+              className="btn btn-primary btn-lg"
+              onClick={handleSaveChanges}
+            >
+              <i className="fas fa-save me-2"></i>
+              Save Changes
+            </button>
           </div>
         )}
       </div>
