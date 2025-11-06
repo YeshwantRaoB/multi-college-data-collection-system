@@ -121,34 +121,36 @@ if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
     // Catch-all handler: send back React's index.html file for client-side routing
-    app.get('*', (req, res) => {
-        if (!req.path.startsWith('/api')) {
-            res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
-        } else {
-            res.status(404).json({
-                message: `API route not found: ${req.path}`,
-                availableRoutes: [
-                    'GET /api/health',
-                    'POST /api/auth/login',
-                    'GET /api/auth/verify',
-                    'GET /api/colleges',
-                    'POST /api/colleges',
-                    'PUT /api/colleges/:id',
-                    'DELETE /api/colleges/:id',
-                    'GET /api/users',
-                    'POST /api/users',
-                    'PUT /api/users/:id',
-                    'DELETE /api/users/:id',
-                    'POST /api/upload/colleges',
-                    'POST /api/upload/users',
-                    'GET /api/reports/filters',
-                    'GET /api/reports/data',
-                    'GET /api/reports/export/excel',
-                    'GET /api/reports/export/pdf',
-                    'GET /api/logs'
-                ]
-            });
-        }
+    // Use a regex pattern instead of * for Express 5 compatibility
+    app.get(/^\/(?!api).*/, (req, res) => {
+        res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+    });
+    
+    // API 404 handler
+    app.use('/api', (req, res) => {
+        res.status(404).json({
+            message: `API route not found: ${req.path}`,
+            availableRoutes: [
+                'GET /api/health',
+                'POST /api/auth/login',
+                'GET /api/auth/verify',
+                'GET /api/colleges',
+                'POST /api/colleges',
+                'PUT /api/colleges/:id',
+                'DELETE /api/colleges/:id',
+                'GET /api/users',
+                'POST /api/users',
+                'PUT /api/users/:id',
+                'DELETE /api/users/:id',
+                'POST /api/upload/colleges',
+                'POST /api/upload/users',
+                'GET /api/reports/filters',
+                'GET /api/reports/data',
+                'GET /api/reports/export/excel',
+                'GET /api/reports/export/pdf',
+                'GET /api/logs'
+            ]
+        });
     });
 } else {
     // API-only catch-all handler for development

@@ -31,10 +31,7 @@ Thumbs.db
 .git
 .gitignore
 
-# Source files (not needed after build)
-src
-
-# Documentation
+# Documentation (keep src folder - needed for build!)
 README.md
 *.md
 
