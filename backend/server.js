@@ -25,8 +25,9 @@ app.use('/api/', limiter);
 // Auth routes have stricter rate limiting
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // limit each IP to 5 auth requests per windowMs
-    message: 'Too many authentication attempts, please try again later.'
+    max: 20, // limit each IP to 20 auth requests per windowMs (increased for development/testing)
+    message: 'Too many authentication attempts, please try again later.',
+    skip: (req) => req.method === 'OPTIONS' // Skip rate limiting for CORS preflight requests
 });
 app.use('/api/auth/login', authLimiter);
 

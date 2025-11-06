@@ -9,6 +9,7 @@
     "create-admin": "node scripts/createAdmin.js",
     "setup-indexes": "node scripts/setupIndexes.js",
     "create-sample-data": "node scripts/createSampleData.js",
+    "test-connection": "node scripts/testConnection.js",
     "test": "echo \"No tests specified yet\" && exit 0"
   },
   "keywords": [],
