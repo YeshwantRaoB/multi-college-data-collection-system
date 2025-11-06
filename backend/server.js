@@ -116,71 +116,48 @@ app.use((error, req, res, next) => {
     res.status(500).json({ message: 'Something went wrong!' });
 });
 
-// Serve static files from React build (for production)
-if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-    const path = require('path');
-    app.use(express.static(path.join(__dirname, '../frontend/dist')));
+// API 404 handler - no frontend serving, frontend is deployed separately
+app.use('/api', (req, res) => {
+    res.status(404).json({
+        message: `API route not found: ${req.path}`,
+        availableRoutes: [
+            'GET /api/health',
+            'POST /api/auth/login',
+            'GET /api/auth/verify',
+            'POST /api/auth/change-password',
+            'GET /api/colleges',
+            'POST /api/colleges',
+            'PUT /api/colleges/:id',
+            'DELETE /api/colleges/:id',
+            'GET /api/colleges/user/current',
+            'GET /api/users',
+            'POST /api/users',
+            'PUT /api/users/:id',
+            'DELETE /api/users/:id',
+            'POST /api/upload/colleges',
+            'POST /api/upload/users',
+            'GET /api/upload/template/colleges',
+            'GET /api/upload/template/users',
+            'GET /api/reports/filters',
+            'GET /api/reports/data',
+            'GET /api/reports/export/excel',
+            'GET /api/reports/export/pdf',
+            'GET /api/logs',
+            'GET /api/logs/recent/activity'
+        ]
+    });
+});
 
-    // Catch-all handler: send back React's index.html file for client-side routing
-    // Use a regex pattern instead of * for Express 5 compatibility
-    app.get(/^\/(?!api).*/, (req, res) => {
-        res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+// Health check for non-API routes
+app.get('/', (req, res) => {
+    res.json({
+        status: 'Backend API Server Running',
+        message: 'Multi-College Data Collection System API',
+        version: '1.0.0',
+        frontend: process.env.FRONTEND_URL || 'Not configured',
+        documentation: '/api'
     });
-    
-    // API 404 handler
-    app.use('/api', (req, res) => {
-        res.status(404).json({
-            message: `API route not found: ${req.path}`,
-            availableRoutes: [
-                'GET /api/health',
-                'POST /api/auth/login',
-                'GET /api/auth/verify',
-                'GET /api/colleges',
-                'POST /api/colleges',
-                'PUT /api/colleges/:id',
-                'DELETE /api/colleges/:id',
-                'GET /api/users',
-                'POST /api/users',
-                'PUT /api/users/:id',
-                'DELETE /api/users/:id',
-                'POST /api/upload/colleges',
-                'POST /api/upload/users',
-                'GET /api/reports/filters',
-                'GET /api/reports/data',
-                'GET /api/reports/export/excel',
-                'GET /api/reports/export/pdf',
-                'GET /api/logs'
-            ]
-        });
-    });
-} else {
-    // API-only catch-all handler for development
-    app.use('/api', (req, res) => {
-        res.status(404).json({
-            message: `API route not found: ${req.path}`,
-            availableRoutes: [
-                'GET /api/health',
-                'POST /api/auth/login',
-                'GET /api/auth/verify',
-                'GET /api/colleges',
-                'POST /api/colleges',
-                'PUT /api/colleges/:id',
-                'DELETE /api/colleges/:id',
-                'GET /api/users',
-                'POST /api/users',
-                'PUT /api/users/:id',
-                'DELETE /api/users/:id',
-                'POST /api/upload/colleges',
-                'POST /api/upload/users',
-                'GET /api/reports/filters',
-                'GET /api/reports/data',
-                'GET /api/reports/export/excel',
-                'GET /api/reports/export/pdf',
-                'GET /api/logs'
-            ]
-        });
-    });
-}
+});
 
 // For Vercel deployment
 if (process.env.VERCEL) {

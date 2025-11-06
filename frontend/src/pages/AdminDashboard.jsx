@@ -9,6 +9,7 @@ import LogsTab from '../components/LogsTab'
 const AdminDashboard = () => {
   const { currentUser, logout } = useAuth()
   const [activeTab, setActiveTab] = useState('colleges')
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false)
   const [dashboardData, setDashboardData] = useState({
     collegeCount: 0,
     userCount: 0,
@@ -55,6 +56,15 @@ const AdminDashboard = () => {
     logout()
   }
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleChangePassword = (e) => {
+    e.preventDefault()
+    setShowChangePasswordModal(true)
+  }
+
   return (
     <>
       {/* Navigation */}
@@ -69,16 +79,16 @@ const AdminDashboard = () => {
           <div className="collapse navbar-collapse" id="navbarNav">
             <ul className="navbar-nav ms-auto">
               <li className="nav-item">
-                <a className="nav-link" href="#">Dashboard</a>
+                <a className="nav-link" href="#" onClick={(e) => { e.preventDefault(); scrollToTop(); }}>Dashboard</a>
               </li>
               <li className="nav-item dropdown">
                 <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                   <i className="fas fa-user me-1"></i> {currentUser?.username}
                 </a>
                 <ul className="dropdown-menu">
-                  <li><a className="dropdown-item" href="#">Change Password</a></li>
+                  <li><a className="dropdown-item" href="#" onClick={handleChangePassword}>Change Password</a></li>
                   <li><hr className="dropdown-divider" /></li>
-                  <li><a className="dropdown-item" href="#" onClick={handleLogout}>Logout</a></li>
+                  <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleLogout(); }}>Logout</a></li>
                 </ul>
               </li>
             </ul>
@@ -203,7 +213,136 @@ const AdminDashboard = () => {
           </p>
         </div>
       </footer>
+
+      {/* Change Password Modal */}
+      {showChangePasswordModal && (
+        <ChangePasswordModal 
+          show={showChangePasswordModal}
+          onHide={() => setShowChangePasswordModal(false)}
+        />
+      )}
     </>
+  )
+}
+
+// Change Password Modal Component
+const ChangePasswordModal = ({ show, onHide }) => {
+  const [formData, setFormData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    })
+    setError('')
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    
+    if (formData.newPassword !== formData.confirmPassword) {
+      setError('New passwords do not match')
+      return
+    }
+
+    if (formData.newPassword.length < 6) {
+      setError('Password must be at least 6 characters')
+      return
+    }
+
+    setLoading(true)
+    try {
+      await window.api.post('/auth/change-password', {
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword
+      })
+      alert('Password changed successfully!')
+      onHide()
+    } catch (error) {
+      setError(error.response?.data?.message || 'Failed to change password')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!show) return null
+
+  return (
+    <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+      <div className="modal-dialog">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">Change Password</h5>
+            <button type="button" className="btn-close" onClick={onHide}></button>
+          </div>
+          <div className="modal-body">
+            {error && (
+              <div className="alert alert-danger" role="alert">
+                {error}
+              </div>
+            )}
+            <form onSubmit={handleSubmit}>
+              <div className="mb-3">
+                <label htmlFor="currentPassword" className="form-label">Current Password</label>
+                <input
+                  type="password"
+                  className="form-control"
+                  id="currentPassword"
+                  name="currentPassword"
+                  value={formData.currentPassword}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <label htmlFor="newPassword" className="form-label">New Password</label>
+                <input
+                  type="password"
+                  className="form-control"
+                  id="newPassword"
+                  name="newPassword"
+                  value={formData.newPassword}
+                  onChange={handleChange}
+                  required
+                  minLength="6"
+                />
+              </div>
+              <div className="mb-3">
+                <label htmlFor="confirmPassword" className="form-label">Confirm New Password</label>
+                <input
+                  type="password"
+                  className="form-control"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </form>
+          </div>
+          <div className="modal-footer">
+            <button type="button" className="btn btn-secondary" onClick={onHide}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? 'Changing...' : 'Change Password'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 

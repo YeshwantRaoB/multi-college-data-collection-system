@@ -55,7 +55,8 @@ const collegeSchema = new mongoose.Schema({
     deputation: {
         type: Number,
         required: true,
-        min: 0
+        min: 0,
+        default: 0
     },
     deputationToCollegeCode: {
         type: String,

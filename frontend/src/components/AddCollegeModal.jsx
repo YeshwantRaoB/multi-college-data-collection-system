@@ -12,7 +12,7 @@ const AddCollegeModal = ({ show, onHide, onSuccess }) => {
     branch: '',
     sanctioned: '',
     working: '',
-    deputation: '',
+    deputation: '0', // Default to 0
     deputationToCollegeCode: '',
     remarks: ''
   })
@@ -64,9 +64,9 @@ const AddCollegeModal = ({ show, onHide, onSuccess }) => {
       newErrors.working = 'Working must be 0 or greater'
     }
 
-    if (formData.deputation === '' || formData.deputation === null || formData.deputation === undefined) {
-      newErrors.deputation = 'Deputation is required'
-    } else if (parseInt(formData.deputation) < 0 || isNaN(parseInt(formData.deputation))) {
+    // Deputation is optional - default to 0 if empty
+    const deputationValue = formData.deputation === '' ? '0' : formData.deputation
+    if (parseInt(deputationValue) < 0 || isNaN(parseInt(deputationValue))) {
       newErrors.deputation = 'Deputation must be 0 or greater'
     }
 
@@ -99,11 +99,14 @@ const AddCollegeModal = ({ show, onHide, onSuccess }) => {
     setLoading(true)
 
     try {
+      // Default deputation to 0 if empty
+      const deputationValue = formData.deputation === '' ? 0 : parseInt(formData.deputation)
+      
       await window.api.post('/colleges', {
         ...formData,
         sanctioned: parseInt(formData.sanctioned),
         working: parseInt(formData.working),
-        deputation: parseInt(formData.deputation)
+        deputation: deputationValue
       })
 
       onSuccess()
@@ -117,7 +120,7 @@ const AddCollegeModal = ({ show, onHide, onSuccess }) => {
         branch: '',
         sanctioned: '',
         working: '',
-        deputation: '',
+        deputation: '0', // Reset to default 0
         deputationToCollegeCode: '',
         remarks: ''
       })
@@ -280,7 +283,7 @@ const AddCollegeModal = ({ show, onHide, onSuccess }) => {
           </div>
           <div className="col-md-4">
             <div className="mb-3">
-              <label htmlFor="deputation" className="form-label">Deputation <span className="text-danger">*</span></label>
+              <label htmlFor="deputation" className="form-label">Deputation <span className="text-muted">(Optional, default: 0)</span></label>
               <input
                 type="number"
                 className={`form-control ${errors.deputation ? 'is-invalid' : ''}`}
@@ -289,9 +292,10 @@ const AddCollegeModal = ({ show, onHide, onSuccess }) => {
                 value={formData.deputation}
                 onChange={handleChange}
                 min="0"
-                placeholder="e.g., 2"
+                placeholder="0"
               />
               {errors.deputation && <div className="invalid-feedback">{errors.deputation}</div>}
+              <small className="form-text text-muted">Leave as 0 if no staff on deputation</small>
             </div>
           </div>
         </div>

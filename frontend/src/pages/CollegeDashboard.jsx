@@ -103,14 +103,14 @@ const CollegeDashboard = () => {
           <div className="collapse navbar-collapse" id="navbarNav">
             <ul className="navbar-nav ms-auto">
               <li className="nav-item">
-                <a className="nav-link" href="#">Dashboard</a>
+                <a className="nav-link" href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Dashboard</a>
               </li>
               <li className="nav-item dropdown">
                 <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                   <i className="fas fa-user me-1"></i> {currentUser?.username}
                 </a>
                 <ul className="dropdown-menu">
-                  <li><a className="dropdown-item" href="#" onClick={handleLogout}>Logout</a></li>
+                  <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleLogout(); }}>Logout</a></li>
                 </ul>
               </li>
             </ul>
