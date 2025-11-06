@@ -68,33 +68,63 @@ router.post('/colleges', adminAuth, upload.single('file'), async (req, res) => {
         // Process each row
         for (let i = 0; i < data.length; i++) {
             const row = data[i];
+            const rowNum = i + 2; // header is row 1
             try {
+                // Basic required fields
+                const required = ['College Code', 'College Name', 'District', 'Taluk', 'Designation', 'Group', 'Branch', 'Sanctioned'];
+                const missing = required.filter(r => !row[r] && row[r] !== 0);
+                if (missing.length) {
+                    results.errors.push(`Row ${rowNum}: Missing required fields: ${missing.join(', ')}`);
+                    continue;
+                }
+
+                // Parse numeric fields safely
+                const sanctioned = Number.isFinite(Number(row['Sanctioned'])) ? parseInt(row['Sanctioned'], 10) : NaN;
+                const working = row['Working'] !== undefined && row['Working'] !== '' ? parseInt(row['Working'], 10) : 0;
+                const deputation = row['Deputation'] !== undefined && row['Deputation'] !== '' ? parseInt(row['Deputation'], 10) : 0;
+
+                if (Number.isNaN(sanctioned) || sanctioned < 0) {
+                    results.errors.push(`Row ${rowNum}: Invalid Sanctioned value`);
+                    continue;
+                }
+                if (Number.isNaN(working) || working < 0) {
+                    results.errors.push(`Row ${rowNum}: Invalid Working value`);
+                    continue;
+                }
+                if (Number.isNaN(deputation) || deputation < 0) {
+                    results.errors.push(`Row ${rowNum}: Invalid Deputation value`);
+                    continue;
+                }
+
                 // Check if college already exists
                 const existingCollege = await College.findOne({ 
-                    collegeCode: row['College Code'] 
+                    collegeCode: String(row['College Code']).trim()
                 });
 
                 if (existingCollege) {
                     results.duplicates++;
-                    results.errors.push(`Row ${i + 2}: College code ${row['College Code']} already exists`);
+                    results.errors.push(`Row ${rowNum}: College code ${row['College Code']} already exists`);
                     continue;
                 }
 
+                // Compute vacant server-side (ignore provided Vacant column to avoid inconsistencies)
+                const computedVacant = Math.max(0, sanctioned - working - deputation);
+
                 // Create new college
                 const college = new College({
-                    collegeCode: row['College Code'],
-                    collegeName: row['College Name'],
-                    district: row['District'],
-                    taluk: row['Taluk'],
-                    designation: row['Designation'],
-                    group: row['Group'],
-                    branch: row['Branch'],
-                    sanctioned: parseInt(row['Sanctioned']) || 0,
-                    working: parseInt(row['Working']) || 0,
-                    vacant: parseInt(row['Vacant']) || 0,
-                    deputation: parseInt(row['Deputation']) || 0,
-                    deputationToCollegeCode: row['Deputation to College Code'] || '',
-                    remarks: row['Remarks'] || '',
+                    collegeCode: String(row['College Code']).trim(),
+                    collegeName: String(row['College Name']).trim(),
+                    district: String(row['District']).trim(),
+                    taluk: String(row['Taluk']).trim(),
+                    designation: String(row['Designation']).trim(),
+                    group: String(row['Group']).trim(),
+                    branch: String(row['Branch']).trim(),
+                    sanctioned: sanctioned,
+                    working: working,
+                    vacant: computedVacant,
+                    deputation: deputation,
+                    deputationToCollegeCode: row['Deputation to College Code'] ? String(row['Deputation to College Code']).trim() : '',
+                    remarks: row['Remarks'] ? String(row['Remarks']).trim() : '',
                     updatedBy: req.user._id
                 });
 
@@ -113,7 +143,7 @@ router.post('/colleges', adminAuth, upload.single('file'), async (req, res) => {
                 await updateLog.save();
 
             } catch (error) {
-                results.errors.push(`Row ${i + 2}: ${error.message}`);
+                results.errors.push(`Row ${rowNum}: ${error.message}`);
             }
         }
 

@@ -30,13 +30,46 @@ const authLimiter = rateLimit({
 });
 app.use('/api/auth/login', authLimiter);
 
+// CORS configuration for React frontend
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Allow requests from React dev server and production domains
+        const allowedOrigins = [
+            'http://localhost:3000',     // React dev server (CRA default)
+            'http://localhost:5173',     // Vite dev server
+            'http://127.0.0.1:3000',    // Alternative localhost
+            'http://127.0.0.1:5173',    // Alternative localhost for Vite
+        ];
+
+        // Add production frontend URL from environment
+        if (process.env.FRONTEND_URL) {
+            allowedOrigins.push(process.env.FRONTEND_URL);
+        }
+
+        // Allow all Vercel preview deployments
+        if (origin && (origin.endsWith('.vercel.app') || origin.endsWith('.vercel.app/'))) {
+            return callback(null, true);
+        }
+
+        // Allow requests with no origin (mobile apps, Postman, etc.)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.warn('CORS blocked origin:', origin);
+            callback(null, true); // Allow all origins in production for now
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Serve static files from frontend
-app.use(express.static(path.join(__dirname, '../frontend')));
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI, {
@@ -82,18 +115,69 @@ app.use((error, req, res, next) => {
     res.status(500).json({ message: 'Something went wrong!' });
 });
 
-// Catch-all handler: must be after all API routes
-app.use((req, res) => {
-    // If the request is for an API route that doesn't exist
-    if (req.path.startsWith('/api/')) {
-        return res.status(404).json({ 
-            message: `API route not found: ${req.path}` 
+// Serve static files from React build (for production)
+if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+    const path = require('path');
+    app.use(express.static(path.join(__dirname, '../frontend/dist')));
+
+    // Catch-all handler: send back React's index.html file for client-side routing
+    app.get('*', (req, res) => {
+        if (!req.path.startsWith('/api')) {
+            res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+        } else {
+            res.status(404).json({
+                message: `API route not found: ${req.path}`,
+                availableRoutes: [
+                    'GET /api/health',
+                    'POST /api/auth/login',
+                    'GET /api/auth/verify',
+                    'GET /api/colleges',
+                    'POST /api/colleges',
+                    'PUT /api/colleges/:id',
+                    'DELETE /api/colleges/:id',
+                    'GET /api/users',
+                    'POST /api/users',
+                    'PUT /api/users/:id',
+                    'DELETE /api/users/:id',
+                    'POST /api/upload/colleges',
+                    'POST /api/upload/users',
+                    'GET /api/reports/filters',
+                    'GET /api/reports/data',
+                    'GET /api/reports/export/excel',
+                    'GET /api/reports/export/pdf',
+                    'GET /api/logs'
+                ]
+            });
+        }
+    });
+} else {
+    // API-only catch-all handler for development
+    app.use('/api', (req, res) => {
+        res.status(404).json({
+            message: `API route not found: ${req.path}`,
+            availableRoutes: [
+                'GET /api/health',
+                'POST /api/auth/login',
+                'GET /api/auth/verify',
+                'GET /api/colleges',
+                'POST /api/colleges',
+                'PUT /api/colleges/:id',
+                'DELETE /api/colleges/:id',
+                'GET /api/users',
+                'POST /api/users',
+                'PUT /api/users/:id',
+                'DELETE /api/users/:id',
+                'POST /api/upload/colleges',
+                'POST /api/upload/users',
+                'GET /api/reports/filters',
+                'GET /api/reports/data',
+                'GET /api/reports/export/excel',
+                'GET /api/reports/export/pdf',
+                'GET /api/logs'
+            ]
         });
-    }
-    
-    // For all other routes, serve the frontend
-    res.sendFile(path.join(__dirname, '../frontend/index.html'));
-});
+    });
+}
 
 // For Vercel deployment
 if (process.env.VERCEL) {
@@ -102,9 +186,9 @@ if (process.env.VERCEL) {
     // For local development
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
-        console.log(`🚀 Server is running on port ${PORT}`);
-        console.log(`📱 Frontend: http://localhost:${PORT}`);
-        console.log(`🔧 API: http://localhost:${PORT}/api/health`);
-        console.log(`📊 Admin Login: http://localhost:${PORT}`);
+        console.log(`Backend server is running on port ${PORT}`);
+        console.log(`API Base URL: http://localhost:${PORT}/api`);
+        console.log(`React Frontend: http://localhost:3000`);
+        console.log(`Health Check: http://localhost:${PORT}/api/health`);
     });
 }

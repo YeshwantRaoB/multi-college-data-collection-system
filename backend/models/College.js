@@ -79,8 +79,34 @@ const collegeSchema = new mongoose.Schema({
 
 // Calculate vacant positions before saving
 collegeSchema.pre('save', function(next) {
-    this.vacant = this.sanctioned - this.working - this.deputation;
+    this.vacant = Math.max(0, (this.sanctioned || 0) - (this.working || 0) - (this.deputation || 0));
     next();
+});
+
+// Ensure vacant is recalculated when using findOneAndUpdate
+collegeSchema.pre('findOneAndUpdate', async function(next) {
+    try {
+        const update = this.getUpdate() || {};
+        const $set = update.$set || {};
+        // Fetch current doc to compute final numbers
+        const doc = await this.model.findOne(this.getQuery()).lean();
+        if (!doc) return next();
+
+        const sanctioned = ('sanctioned' in $set) ? Number($set.sanctioned) : Number(doc.sanctioned || 0);
+        const working = ('working' in $set) ? Number($set.working) : Number(doc.working || 0);
+        const deputation = ('deputation' in $set) ? Number($set.deputation) : Number(doc.deputation || 0);
+
+        const computedVacant = Math.max(0, sanctioned - working - deputation);
+
+        if (!update.$set) update.$set = {};
+        update.$set.vacant = computedVacant;
+        update.$set.lastUpdated = new Date();
+
+        this.setUpdate(update);
+        next();
+    } catch (err) {
+        next(err);
+    }
 });
 
 module.exports = mongoose.model('College', collegeSchema);

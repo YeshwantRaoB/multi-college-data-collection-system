@@ -1,0 +1,48 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Node modules
+node_modules
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage
+.nyc_output
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Scripts (not needed in production)
+scripts/createAdmin.js
+scripts/createSampleData.js
+scripts/setupIndexes.js
+testPaths.js
+
+# Documentation
+README.md
+*.md
+
+# Optional: Exclude test files if you have them
+__tests__
+*.test.js
+*.spec.js

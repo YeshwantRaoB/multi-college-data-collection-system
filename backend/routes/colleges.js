@@ -2,13 +2,30 @@ const express = require('express');
 const College = require('../models/College');
 const UpdateLog = require('../models/UpdateLog');
 const { auth, adminAuth, collegeAuth } = require('../middleware/auth');
+const { validateBody, schemas } = require('../middleware/validate');
 const router = express.Router();
 
-// Get all colleges (admin only)
+// Get all colleges (admin only) with pagination
 router.get('/', adminAuth, async (req, res) => {
     try {
-        const colleges = await College.find().sort({ collegeName: 1 });
-        res.json(colleges);
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 25));
+        const skip = (page - 1) * limit;
+
+        const [colleges, total] = await Promise.all([
+            College.find().sort({ collegeName: 1 }).skip(skip).limit(limit).lean(),
+            College.countDocuments()
+        ]);
+
+        res.json({
+            data: colleges,
+            meta: {
+                total,
+                page,
+                limit,
+                pages: Math.ceil(total / limit)
+            }
+        });
     } catch (error) {
         console.error('Get colleges error:', error);
         res.status(500).json({ message: 'Server error' });
@@ -36,8 +53,8 @@ router.get('/:collegeCode', auth, async (req, res) => {
     }
 });
 
-// Create new college (admin only)
-router.post('/', adminAuth, async (req, res) => {
+// Create new college (admin only) — apply validation
+router.post('/', adminAuth, validateBody(schemas.collegeCreate), async (req, res) => {
     try {
         const {
             collegeCode,
@@ -97,7 +114,8 @@ router.post('/', adminAuth, async (req, res) => {
 });
 
 // Update college (admin can update all fields, college users only working and deputation)
-router.put('/:collegeCode', auth, async (req, res) => {
+// apply validation (partial) for update
+router.put('/:collegeCode', auth, validateBody(schemas.collegeUpdate), async (req, res) => {
     try {
         const college = await College.findOne({ collegeCode: req.params.collegeCode });
         
@@ -110,49 +128,78 @@ router.put('/:collegeCode', auth, async (req, res) => {
             return res.status(403).json({ message: 'Access denied' });
         }
 
-        const updateLogs = [];
-        const updatedFields = {};
-
         // Define allowed fields for college users
         const collegeUserAllowedFields = ['working', 'deputation', 'deputationToCollegeCode'];
-        
-        Object.keys(req.body).forEach(field => {
-            // Check if college user is trying to update non-allowed field
+
+        // Build newValues with validation
+        const incoming = req.body || {};
+        const newValues = {};
+
+        // Validate each incoming field
+        for (const field of Object.keys(incoming)) {
             if (req.user.role === 'college' && !collegeUserAllowedFields.includes(field)) {
                 return res.status(403).json({ 
                     message: `You can only update ${collegeUserAllowedFields.join(', ')} fields` 
                 });
             }
 
-            if (college[field] !== req.body[field]) {
-                // Create update log
+            // sanitize numeric fields
+            if (['sanctioned', 'working', 'deputation'].includes(field)) {
+                const n = parseInt(incoming[field], 10);
+                if (Number.isNaN(n) || n < 0) {
+                    return res.status(400).json({ message: `Invalid value for ${field}` });
+                }
+                newValues[field] = n;
+            } else {
+                newValues[field] = incoming[field];
+            }
+        }
+
+        // If no changes requested
+        if (Object.keys(newValues).length === 0) {
+            return res.status(400).json({ message: 'No changes detected' });
+        }
+
+        // Compute resulting numeric values (use existing values when not updated)
+        const resultingSanctioned = ('sanctioned' in newValues) ? newValues.sanctioned : college.sanctioned;
+        const resultingWorking = ('working' in newValues) ? newValues.working : college.working;
+        const resultingDeputation = ('deputation' in newValues) ? newValues.deputation : college.deputation;
+
+        // Recompute vacant server-side
+        const computedVacant = Math.max(0, resultingSanctioned - resultingWorking - resultingDeputation);
+        newValues.vacant = computedVacant;
+
+        // Prepare update logs: only for fields that actually change
+        const updateLogs = [];
+        for (const [field, value] of Object.entries(newValues)) {
+            const oldValRaw = college[field] === undefined || college[field] === null ? '' : college[field];
+            const newValRaw = value === undefined || value === null ? '' : value;
+
+            // Compare as strings to cover numbers and strings
+            if (String(oldValRaw) !== String(newValRaw)) {
                 updateLogs.push({
                     user: req.user._id,
                     collegeCode: college.collegeCode,
                     fieldChanged: field,
-                    oldValue: college[field].toString(),
-                    newValue: req.body[field].toString(),
+                    oldValue: String(oldValRaw),
+                    newValue: String(newValRaw),
                     ipAddress: req.ip
                 });
-
-                updatedFields[field] = req.body[field];
             }
-        });
-
-        if (Object.keys(updatedFields).length === 0) {
-            return res.status(400).json({ message: 'No changes detected' });
         }
 
-        updatedFields.updatedBy = req.user._id;
-        updatedFields.lastUpdated = new Date();
+        // Attach metadata
+        newValues.updatedBy = req.user._id;
+        newValues.lastUpdated = new Date();
 
+        // Apply update (findOneAndUpdate bypasses pre save hooks, so vacant already set)
         const updatedCollege = await College.findOneAndUpdate(
             { collegeCode: req.params.collegeCode },
-            { $set: updatedFields },
+            { $set: newValues },
             { new: true, runValidators: true }
         );
 
-        // Save all update logs
+        // Persist logs
         for (const logData of updateLogs) {
             const updateLog = new UpdateLog(logData);
             await updateLog.save();
