@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react'
 import axios from 'axios'
+import { prefetchData } from '../utils/serviceWorker'
 
 const AuthContext = createContext()
 
@@ -69,10 +70,17 @@ export const AuthProvider = ({ children }) => {
   const verifyToken = async () => {
     try {
       const response = await api.get('/auth/verify')
-      setCurrentUser(response.data.user)
+      const user = response.data.user
+      setCurrentUser(user)
+      // Store user info for persistence
+      localStorage.setItem('user', JSON.stringify(user))
+      
+      // Prefetch user-specific data for better performance
+      prefetchData(api, user).catch(err => console.warn('Prefetch error:', err))
     } catch (error) {
       console.error('Token verification failed:', error)
       localStorage.removeItem('token')
+      localStorage.removeItem('user')
       setToken(null)
     } finally {
       setLoading(false)
@@ -87,8 +95,12 @@ export const AuthProvider = ({ children }) => {
       setToken(newToken)
       setCurrentUser(user)
       localStorage.setItem('token', newToken)
+      localStorage.setItem('user', JSON.stringify(user))
 
-      return { success: true }
+      // Prefetch user-specific data for better performance
+      prefetchData(api, user).catch(err => console.warn('Prefetch error:', err))
+
+      return { success: true, user }
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Login failed')
     }
@@ -98,6 +110,9 @@ export const AuthProvider = ({ children }) => {
     setToken(null)
     setCurrentUser(null)
     localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    // Redirect to login page
+    window.location.href = '/'
   }
 
   const value = {

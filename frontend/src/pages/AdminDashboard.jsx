@@ -98,13 +98,13 @@ const AdminDashboard = () => {
       </nav>
 
       {/* Main Content */}
-      <div className="container mt-4">
-        <h2 className="mb-4">Admin Dashboard</h2>
+      <div className="container mt-4 animate-fade-in">
+        <h2 className="mb-4 animate-slide-in-right">Admin Dashboard</h2>
 
         {/* Dashboard Cards */}
         <div className="row">
           <div className="col-md-3">
-            <div className="card dashboard-card text-center">
+            <div className="card dashboard-card card-modern text-center animate-fade-in-up">
               <div className="card-body">
                 <i className="fas fa-university card-icon"></i>
                 <h5 className="card-title">Colleges</h5>
@@ -113,7 +113,7 @@ const AdminDashboard = () => {
             </div>
           </div>
           <div className="col-md-3">
-            <div className="card dashboard-card text-center">
+            <div className="card dashboard-card card-modern text-center animate-fade-in-up delay-100">
               <div className="card-body">
                 <i className="fas fa-users card-icon"></i>
                 <h5 className="card-title">Users</h5>
@@ -122,7 +122,7 @@ const AdminDashboard = () => {
             </div>
           </div>
           <div className="col-md-3">
-            <div className="card dashboard-card text-center">
+            <div className="card dashboard-card card-modern text-center animate-fade-in-up delay-200">
               <div className="card-body">
                 <i className="fas fa-file-excel card-icon"></i>
                 <h5 className="card-title">Reports</h5>
@@ -131,7 +131,7 @@ const AdminDashboard = () => {
             </div>
           </div>
           <div className="col-md-3">
-            <div className="card dashboard-card text-center">
+            <div className="card dashboard-card card-modern text-center animate-fade-in-up delay-300">
               <div className="card-body">
                 <i className="fas fa-history card-icon"></i>
                 <h5 className="card-title">Updates</h5>
@@ -142,7 +142,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Tabs */}
-        <ul className="nav nav-tabs mt-4" role="tablist">
+        <ul className="nav nav-tabs mt-4 animate-fade-in delay-300" role="tablist">
           <li className="nav-item" role="presentation">
             <button
               className={`nav-link ${activeTab === 'colleges' ? 'active' : ''}`}

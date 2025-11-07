@@ -35,10 +35,28 @@ const CollegeDashboard = () => {
 
   const updateField = (fieldName, newValue) => {
     // Update local state immediately for responsive UI
-    setCollegeData({
+    const updatedData = {
       ...collegeData,
       [fieldName]: newValue
-    })
+    }
+    
+    // Auto-calculate vacant when working, deputation, or vacant itself changes
+    if (['working', 'deputation', 'vacant'].includes(fieldName)) {
+      const sanctioned = parseInt(updatedData.sanctioned) || 0
+      const working = parseInt(updatedData.working) || 0
+      const deputation = parseInt(updatedData.deputation) || 0
+      const vacant = parseInt(updatedData.vacant) || 0
+      
+      // If vacant is being directly edited, adjust working to match
+      if (fieldName === 'vacant') {
+        updatedData.working = Math.max(0, sanctioned - deputation - vacant)
+      } else {
+        // Auto-calculate vacant
+        updatedData.vacant = Math.max(0, sanctioned - working - deputation)
+      }
+    }
+    
+    setCollegeData(updatedData)
   }
 
   const handleSaveChanges = async () => {
@@ -57,9 +75,17 @@ const CollegeDashboard = () => {
         return
       }
 
+      const vacant = parseInt(collegeData.vacant)
+      
+      if (isNaN(vacant) || vacant < 0) {
+        alert('Vacant must be a valid number (0 or greater)')
+        return
+      }
+      
       const updateData = { 
         working: working,
         deputation: deputation,
+        vacant: vacant,
         deputationToCollegeCode: collegeData.deputationToCollegeCode || ''
       }
       
@@ -123,17 +149,22 @@ const CollegeDashboard = () => {
       </nav>
 
       {/* Main Content */}
-      <div className="container mt-4">
-        <h2 className="mb-4">{currentUser?.collegeCode} Dashboard</h2>
+      <div className="container mt-4 animate-fade-in">
+        <h2 className="mb-4 animate-slide-in-right">{currentUser?.collegeCode} Dashboard</h2>
 
-        <div className="alert alert-info">
+        <div className="alert alert-info alert-modern animate-fade-in-up delay-100">
           <i className="fas fa-info-circle me-2"></i>
-          You can only edit the "Working", "Deputation", and "Deputation To" fields. Other fields are view-only.
+          You can edit the "Working", "Vacant", "Deputation", and "Deputation To" fields. Other fields are view-only.
+          <br/>
+          <small className="mt-2 d-block">
+            <i className="fas fa-calculator me-1"></i>
+            <strong>Formula:</strong> Vacant = Sanctioned - Working - Deputation (auto-calculated when you edit Working or Deputation)
+          </small>
         </div>
 
         {collegeData && (
-          <div className="table-responsive">
-            <table className="table table-striped table-hover">
+          <div className="table-responsive animate-fade-in-up delay-200">
+            <table className="table table-striped table-hover table-modern">
               <thead>
                 <tr>
                   <th>College Code</th>
@@ -170,7 +201,15 @@ const CollegeDashboard = () => {
                       onChange={(e) => updateField('working', e.target.value)}
                     />
                   </td>
-                  <td>{collegeData.vacant}</td>
+                  <td>
+                    <input
+                      type="number"
+                      className="form-control form-control-sm"
+                      value={collegeData.vacant}
+                      onChange={(e) => updateField('vacant', e.target.value)}
+                      title="Edit vacant positions (will auto-adjust working)"
+                    />
+                  </td>
                   <td>
                     <input
                       type="number"

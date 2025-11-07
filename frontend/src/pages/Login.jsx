@@ -38,21 +38,21 @@ const Login = () => {
 
   return (
     <div className="container mt-4">
-      <div className="login-container">
+      <div className="login-container animate-fade-in-up">
         <div className="text-center mb-4">
-          <i className="fas fa-university fa-3x text-primary mb-3"></i>
-          <h2 className="fw-bold">Multi-College Data System</h2>
-          <p className="text-muted">Secure Login Portal</p>
+          <i className="fas fa-university fa-3x text-primary mb-3 animate-pulse"></i>
+          <h2 className="fw-bold animate-fade-in delay-100">Multi-College Data System</h2>
+          <p className="text-muted animate-fade-in delay-200">Secure Login Portal</p>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="animate-slide-in-right delay-300">
           <div className="mb-3">
             <label htmlFor="username" className="form-label fw-semibold">
               <i className="fas fa-user me-2"></i>Username
             </label>
             <input
               type="text"
-              className="form-control form-control-lg"
+              className="form-control form-control-lg input-modern"
               id="username"
               name="username"
               placeholder="Enter your username"
@@ -69,7 +69,7 @@ const Login = () => {
             </label>
             <input
               type="password"
-              className="form-control form-control-lg"
+              className="form-control form-control-lg input-modern"
               id="password"
               name="password"
               placeholder="Enter your password"
@@ -83,7 +83,7 @@ const Login = () => {
           <div className="d-grid mb-3">
             <button
               type="submit"
-              className="btn btn-primary btn-lg"
+              className="btn btn-primary btn-lg btn-modern"
               disabled={loading}
             >
               {loading ? (

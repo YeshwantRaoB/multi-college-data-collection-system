@@ -130,7 +130,7 @@ router.put('/:collegeCode', auth, clearCacheOnMutation('/colleges'), validateBod
         }
 
         // Define allowed fields for college users
-        const collegeUserAllowedFields = ['working', 'deputation', 'deputationToCollegeCode'];
+        const collegeUserAllowedFields = ['working', 'deputation', 'vacant', 'deputationToCollegeCode'];
 
         // Build newValues with validation
         const incoming = req.body || {};
@@ -145,7 +145,7 @@ router.put('/:collegeCode', auth, clearCacheOnMutation('/colleges'), validateBod
             }
 
             // sanitize numeric fields
-            if (['sanctioned', 'working', 'deputation'].includes(field)) {
+            if (['sanctioned', 'working', 'deputation', 'vacant'].includes(field)) {
                 const n = parseInt(incoming[field], 10);
                 if (Number.isNaN(n) || n < 0) {
                     return res.status(400).json({ message: `Invalid value for ${field}` });
@@ -163,10 +163,19 @@ router.put('/:collegeCode', auth, clearCacheOnMutation('/colleges'), validateBod
 
         // Compute resulting numeric values (use existing values when not updated)
         const resultingSanctioned = ('sanctioned' in newValues) ? newValues.sanctioned : college.sanctioned;
-        const resultingWorking = ('working' in newValues) ? newValues.working : college.working;
+        let resultingWorking = ('working' in newValues) ? newValues.working : college.working;
         const resultingDeputation = ('deputation' in newValues) ? newValues.deputation : college.deputation;
+        let resultingVacant = ('vacant' in newValues) ? newValues.vacant : null;
 
-        // Recompute vacant server-side
+        // If vacant is provided, adjust working to maintain the equation
+        // Vacant = Sanctioned - Working - Deputation
+        // Therefore: Working = Sanctioned - Vacant - Deputation
+        if (resultingVacant !== null) {
+            resultingWorking = Math.max(0, resultingSanctioned - resultingVacant - resultingDeputation);
+            newValues.working = resultingWorking;
+        }
+        
+        // Recompute vacant server-side (always recalculate to ensure consistency)
         const computedVacant = Math.max(0, resultingSanctioned - resultingWorking - resultingDeputation);
         newValues.vacant = computedVacant;
 
