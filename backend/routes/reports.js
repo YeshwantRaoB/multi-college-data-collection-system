@@ -1,13 +1,16 @@
 const express = require('express');
 const XLSX = require('xlsx');
 let jsPDF;
-let autoTableAvailable = false;
+let autoTable;
+let pdfAvailable = false;
 try {
     const jsPDFModule = require('jspdf');
     jsPDF = jsPDFModule.jsPDF;
-    // Load autotable plugin
-    const autoTable = require('jspdf-autotable');
-    autoTableAvailable = true;
+    // Load autotable plugin - it extends jsPDF prototype
+    require('jspdf-autotable');
+    // Get autoTable function from jsPDF prototype or as standalone
+    autoTable = jsPDFModule.default || require('jspdf-autotable').default;
+    pdfAvailable = true;
     console.log('✅ jsPDF and autoTable loaded successfully');
 } catch (error) {
     console.warn('⚠️ jsPDF not loaded, PDF export will be unavailable:', error.message);
@@ -163,8 +166,8 @@ router.get('/export/excel', auth, async (req, res) => {
 // Export to PDF
 router.get('/export/pdf', auth, async (req, res) => {
     try {
-        // Check if jsPDF and autoTable are available
-        if (!jsPDF || !autoTableAvailable) {
+        // Check if jsPDF is available
+        if (!jsPDF || !pdfAvailable) {
             return res.status(500).json({ message: 'PDF generation is currently unavailable' });
         }
 
@@ -198,14 +201,28 @@ router.get('/export/pdf', auth, async (req, res) => {
             college.deputationToCollegeCode || ''
         ]);
         
-        // Add table
-        doc.autoTable({
-            startY: 40,
-            head: [['Code', 'Name', 'District', 'Taluk', 'Designation', 'Sanctioned', 'Working', 'Vacant', 'Deputation', 'Deputation To']],
-            body: tableData,
-            styles: { fontSize: 8 },
-            headStyles: { fillColor: [41, 128, 185] }
-        });
+        // Add table - use autoTable as function or method
+        if (typeof doc.autoTable === 'function') {
+            // Method is available on doc instance
+            doc.autoTable({
+                startY: 40,
+                head: [['Code', 'Name', 'District', 'Taluk', 'Designation', 'Sanctioned', 'Working', 'Vacant', 'Deputation', 'Deputation To']],
+                body: tableData,
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [41, 128, 185] }
+            });
+        } else if (autoTable) {
+            // Use as standalone function
+            autoTable(doc, {
+                startY: 40,
+                head: [['Code', 'Name', 'District', 'Taluk', 'Designation', 'Sanctioned', 'Working', 'Vacant', 'Deputation', 'Deputation To']],
+                body: tableData,
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [41, 128, 185] }
+            });
+        } else {
+            throw new Error('autoTable is not available');
+        }
         
         // Add summary page if there are multiple pages
         if (doc.internal.getNumberOfPages() > 1) {
@@ -229,12 +246,22 @@ router.get('/export/pdf', auth, async (req, res) => {
                 ['Deputation Positions', totals.deputation]
             ];
             
-            doc.autoTable({
-                startY: 25,
-                head: [['Metric', 'Total']],
-                body: summaryData,
-                styles: { fontSize: 10 }
-            });
+            // Add summary table
+            if (typeof doc.autoTable === 'function') {
+                doc.autoTable({
+                    startY: 25,
+                    head: [['Metric', 'Total']],
+                    body: summaryData,
+                    styles: { fontSize: 10 }
+                });
+            } else if (autoTable) {
+                autoTable(doc, {
+                    startY: 25,
+                    head: [['Metric', 'Total']],
+                    body: summaryData,
+                    styles: { fontSize: 10 }
+                });
+            }
         }
         
         // Generate PDF buffer

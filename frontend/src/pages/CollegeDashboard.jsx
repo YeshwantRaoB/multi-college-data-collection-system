@@ -255,7 +255,7 @@ const CollegeDashboard = () => {
               <div className="col-md-4 text-center text-md-start mb-3 mb-md-0">
                 <h5 className="footer-title mb-2">
                   <i className="fas fa-university me-2"></i>
-                  Multi-College System
+                  Multi-College Data Collection System
                 </h5>
                 <p className="footer-subtitle mb-0">Data Management Excellence</p>
               </div>
@@ -269,9 +269,9 @@ const CollegeDashboard = () => {
               <div className="col-md-4 text-center text-md-end">
                 <p className="footer-info mb-2">
                   <i className="fas fa-code me-2"></i>
-                  <strong>Developed by:</strong>
+                  <strong>Designed & Developed by:</strong>
                   <a href="https://yrb-portfolio.netlify.app/" target="_blank" rel="noopener noreferrer" className="developer-link-modern ms-1">
-                    Yeshwant Rao B
+                    Mr. Yeshwant Rao
                   </a>
                 </p>
                 <p className="footer-college mb-0">
@@ -285,7 +285,7 @@ const CollegeDashboard = () => {
             <div className="footer-bottom text-center py-3">
               <p className="mb-0">
                 <i className="fas fa-copyright me-1"></i>
-                <span id="currentYear"></span> All Rights Reserved | Made with <i className="fas fa-heart text-danger"></i> in India
+                <span id="currentYear"></span> All Rights Reserved
               </p>
             </div>
           </div>

@@ -219,7 +219,7 @@ const AdminDashboard = () => {
                   <i className="fas fa-code me-2"></i>
                   <strong>Designed & Developed by:</strong>
                   <a href="https://yrb-portfolio.netlify.app/" target="_blank" rel="noopener noreferrer" className="developer-link-modern ms-1">
-                    Mr. Yeshwant Rao B
+                    Mr. Yeshwant Rao
                   </a>
                 </p>
                 <p className="footer-college mb-0">
