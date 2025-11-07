@@ -67,6 +67,7 @@ router.post('/', adminAuth, clearCacheOnMutation('/colleges'), validateBody(sche
             branch,
             sanctioned,
             working,
+            vacant,
             deputation,
             deputationToCollegeCode,
             remarks
@@ -88,6 +89,7 @@ router.post('/', adminAuth, clearCacheOnMutation('/colleges'), validateBody(sche
             branch,
             sanctioned,
             working,
+            vacant,
             deputation,
             deputationToCollegeCode,
             remarks,

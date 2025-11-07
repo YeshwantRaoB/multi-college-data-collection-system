@@ -99,13 +99,6 @@ const Login = () => {
               )}
             </button>
           </div>
-
-          <div className="text-center">
-            <small className="text-muted">
-              <i className="fas fa-info-circle me-1"></i>
-              Demo Credentials: <strong>admin / admin123</strong>
-            </small>
-          </div>
         </form>
 
         {error && (

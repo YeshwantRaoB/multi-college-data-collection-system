@@ -79,9 +79,19 @@ const collegeSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Calculate vacant positions before saving
+// Calculate vacant positions before saving (only if not explicitly set)
 collegeSchema.pre('save', function(next) {
-    this.vacant = Math.max(0, (this.sanctioned || 0) - (this.working || 0) - (this.deputation || 0));
+    // Only auto-calculate vacant if it wasn't explicitly provided or is null/undefined
+    if (this.vacant === undefined || this.vacant === null) {
+        this.vacant = Math.max(0, (this.sanctioned || 0) - (this.working || 0) - (this.deputation || 0));
+    } else {
+        // If vacant was manually provided, adjust working to maintain consistency
+        // Working = Sanctioned - Vacant - Deputation
+        const targetWorking = Math.max(0, (this.sanctioned || 0) - this.vacant - (this.deputation || 0));
+        this.working = targetWorking;
+        // Now recalculate vacant to ensure it's consistent with the adjusted working
+        this.vacant = Math.max(0, (this.sanctioned || 0) - this.working - (this.deputation || 0));
+    }
     next();
 });
 

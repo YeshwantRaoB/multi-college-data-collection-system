@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 const EditCollegeModal = ({ show, onHide, college, onSuccess }) => {
   const [formData, setFormData] = useState({
     working: '',
+    vacant: '',
     deputation: '',
     deputationToCollegeCode: ''
   })
@@ -12,15 +13,20 @@ const EditCollegeModal = ({ show, onHide, college, onSuccess }) => {
     if (college) {
       setFormData({
         working: college.working || '',
+        vacant: college.vacant || '',
         deputation: college.deputation || '',
         deputationToCollegeCode: college.deputationToCollegeCode || ''
       })
     }
   }, [college])
 
-  // Calculate vacant automatically
+  // Calculate vacant automatically if not manually entered
   const calculateVacant = () => {
     if (!college) return 0
+    // If vacant is manually set, use it
+    if (formData.vacant !== '' && formData.vacant !== null && formData.vacant !== undefined) {
+      return parseInt(formData.vacant) || 0
+    }
     const sanctioned = parseInt(college.sanctioned) || 0
     const working = parseInt(formData.working) || 0
     const deputation = parseInt(formData.deputation) || 0
@@ -29,9 +35,16 @@ const EditCollegeModal = ({ show, onHide, college, onSuccess }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target
+    let processedValue = value
+    
+    // Auto-uppercase for text fields
+    if (name === 'deputationToCollegeCode') {
+      processedValue = value.toUpperCase()
+    }
+    
     setFormData({
       ...formData,
-      [name]: value
+      [name]: processedValue
     })
   }
 
@@ -41,6 +54,7 @@ const EditCollegeModal = ({ show, onHide, college, onSuccess }) => {
     // Validate numeric fields
     const working = parseInt(formData.working)
     const deputation = parseInt(formData.deputation)
+    const vacant = parseInt(formData.vacant)
     
     if (isNaN(working) || working < 0) {
       alert('Working must be a valid number (0 or greater)')
@@ -52,11 +66,17 @@ const EditCollegeModal = ({ show, onHide, college, onSuccess }) => {
       return
     }
     
+    if (isNaN(vacant) || vacant < 0) {
+      alert('Vacant must be a valid number (0 or greater)')
+      return
+    }
+    
     setLoading(true)
 
     try {
       await window.api.put(`/colleges/${college.collegeCode}`, {
         working: working,
+        vacant: vacant,
         deputation: deputation,
         deputationToCollegeCode: formData.deputationToCollegeCode
       })
@@ -202,19 +222,21 @@ const EditCollegeModal = ({ show, onHide, college, onSuccess }) => {
                 <div className="col-md-4">
                   <div className="mb-3">
                     <label htmlFor="vacant" className="form-label">
-                      Vacant <span className="badge bg-info">Auto-calculated</span>
+                      Vacant <span className="badge bg-warning text-dark">Editable</span>
                     </label>
                     <input
                       type="number"
-                      className="form-control bg-light"
+                      className="form-control"
                       id="vacant"
-                      value={calculateVacant()}
-                      readOnly
-                      disabled
+                      name="vacant"
+                      value={formData.vacant === '' ? calculateVacant() : formData.vacant}
+                      onChange={handleChange}
+                      required
+                      min="0"
                       style={{ fontWeight: 'bold', fontSize: '1.1rem' }}
                     />
                     <small className="form-text text-muted">
-                      = {college?.sanctioned || 0} - {formData.working || 0} - {formData.deputation || 0}
+                      {formData.vacant === '' ? `Auto: ${college?.sanctioned || 0} - ${formData.working || 0} - ${formData.deputation || 0}` : 'Manual override active'}
                     </small>
                   </div>
                 </div>

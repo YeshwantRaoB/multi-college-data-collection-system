@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import Modal from './Modal'
+import { getDistricts, getTaluksByDistrict } from '../data/karnatakaData'
 
 const AddCollegeModal = ({ show, onHide, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -12,10 +13,13 @@ const AddCollegeModal = ({ show, onHide, onSuccess }) => {
     branch: '',
     sanctioned: '',
     working: '',
+    vacant: '', // Allow manual editing
     deputation: '0', // Default to 0
     deputationToCollegeCode: '',
     remarks: ''
   })
+  const [availableTaluks, setAvailableTaluks] = useState([])
+  const districts = getDistricts()
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState({})
 
@@ -74,8 +78,12 @@ const AddCollegeModal = ({ show, onHide, onSuccess }) => {
     return Object.keys(newErrors).length === 0
   }
 
-  // Calculate vacant automatically
+  // Calculate vacant automatically if not manually entered
   const calculateVacant = () => {
+    // If vacant is manually set, use it
+    if (formData.vacant !== '' && formData.vacant !== null && formData.vacant !== undefined) {
+      return parseInt(formData.vacant) || 0
+    }
     const sanctioned = parseInt(formData.sanctioned) || 0
     const working = parseInt(formData.working) || 0
     const deputation = parseInt(formData.deputation) || 0
@@ -84,10 +92,30 @@ const AddCollegeModal = ({ show, onHide, onSuccess }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData({
-      ...formData,
-      [name]: value
-    })
+    let processedValue = value
+    
+    // Auto-uppercase for text fields
+    if (['collegeCode', 'collegeName', 'district', 'taluk', 'designation', 'group', 'branch', 'deputationToCollegeCode', 'remarks'].includes(name)) {
+      processedValue = value.toUpperCase()
+    }
+    
+    // Handle district change - update available taluks
+    if (name === 'district') {
+      const taluks = getTaluksByDistrict(processedValue)
+      setAvailableTaluks(taluks)
+      // Reset taluk when district changes
+      setFormData({
+        ...formData,
+        district: processedValue,
+        taluk: ''
+      })
+    } else {
+      setFormData({
+        ...formData,
+        [name]: processedValue
+      })
+    }
+    
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors({
@@ -109,11 +137,13 @@ const AddCollegeModal = ({ show, onHide, onSuccess }) => {
     try {
       // Default deputation to 0 if empty
       const deputationValue = formData.deputation === '' ? 0 : parseInt(formData.deputation)
+      const vacantValue = formData.vacant === '' ? calculateVacant() : parseInt(formData.vacant)
       
       await window.api.post('/colleges', {
         ...formData,
         sanctioned: parseInt(formData.sanctioned),
         working: parseInt(formData.working),
+        vacant: vacantValue,
         deputation: deputationValue
       })
 
@@ -128,10 +158,12 @@ const AddCollegeModal = ({ show, onHide, onSuccess }) => {
         branch: '',
         sanctioned: '',
         working: '',
+        vacant: '',
         deputation: '0', // Reset to default 0
         deputationToCollegeCode: '',
         remarks: ''
       })
+      setAvailableTaluks([])
       setErrors({})
     } catch (error) {
       console.error('Error adding college:', error)
@@ -191,29 +223,37 @@ const AddCollegeModal = ({ show, onHide, onSuccess }) => {
             </div>
             <div className="mb-3">
               <label htmlFor="district" className="form-label">District <span className="text-danger">*</span></label>
-              <input
-                type="text"
+              <select
                 className={`form-control ${errors.district ? 'is-invalid' : ''}`}
                 id="district"
                 name="district"
                 value={formData.district}
                 onChange={handleChange}
-                placeholder="e.g., Dakshina Kannada"
-              />
+              >
+                <option value="">Select District</option>
+                {districts.map(district => (
+                  <option key={district} value={district}>{district}</option>
+                ))}
+              </select>
               {errors.district && <div className="invalid-feedback">{errors.district}</div>}
             </div>
             <div className="mb-3">
               <label htmlFor="taluk" className="form-label">Taluk <span className="text-danger">*</span></label>
-              <input
-                type="text"
+              <select
                 className={`form-control ${errors.taluk ? 'is-invalid' : ''}`}
                 id="taluk"
                 name="taluk"
                 value={formData.taluk}
                 onChange={handleChange}
-                placeholder="e.g., Mangalore"
-              />
+                disabled={!formData.district}
+              >
+                <option value="">{formData.district ? 'Select Taluk' : 'Select District First'}</option>
+                {availableTaluks.map(taluk => (
+                  <option key={taluk} value={taluk}>{taluk}</option>
+                ))}
+              </select>
               {errors.taluk && <div className="invalid-feedback">{errors.taluk}</div>}
+              {formData.district && <small className="form-text text-muted">Showing taluks for {formData.district}</small>}
             </div>
           </div>
           <div className="col-md-6">
@@ -309,20 +349,21 @@ const AddCollegeModal = ({ show, onHide, onSuccess }) => {
           <div className="col-md-4">
             <div className="mb-3">
               <label htmlFor="vacant" className="form-label">
-                Vacant <span className="badge bg-info">Auto-calculated</span>
+                Vacant <span className="badge bg-warning text-dark">Editable</span>
               </label>
               <input
                 type="number"
-                className="form-control bg-light"
+                className="form-control"
                 id="vacant"
                 name="vacant"
-                value={calculateVacant()}
-                readOnly
-                disabled
+                value={formData.vacant === '' ? calculateVacant() : formData.vacant}
+                onChange={handleChange}
+                min="0"
+                placeholder="Leave blank for auto-calc"
                 style={{ fontWeight: 'bold', fontSize: '1.1rem' }}
               />
               <small className="form-text text-muted">
-                Formula: Sanctioned - Working - Deputation
+                {formData.vacant === '' ? 'Auto: Sanctioned - Working - Deputation' : 'Manual override active'}
               </small>
             </div>
           </div>

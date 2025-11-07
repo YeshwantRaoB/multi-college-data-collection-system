@@ -101,8 +101,18 @@ body {
 
 .table-responsive {
   border-radius: 15px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: visible;
   box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+  display: block;
+}
+
+.table {
+  min-width: 100%;
+  width: max-content;
+  margin-bottom: 0;
 }
 
 .table th {
@@ -114,6 +124,21 @@ body {
   font-size: 0.85rem;
   padding: 15px 12px;
   border: none;
+  white-space: nowrap;
+}
+
+.table td {
+  white-space: nowrap;
+  padding: 12px;
+}
+
+.table td input.form-control {
+  min-width: 80px;
+  font-size: 0.9rem;
+}
+
+.table td input.form-control-sm {
+  min-width: 70px;
 }
 
 .table tbody tr {

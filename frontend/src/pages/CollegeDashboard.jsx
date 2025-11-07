@@ -34,10 +34,16 @@ const CollegeDashboard = () => {
   }
 
   const updateField = (fieldName, newValue) => {
+    // Auto-uppercase for text fields
+    let processedValue = newValue
+    if (fieldName === 'deputationToCollegeCode') {
+      processedValue = newValue.toUpperCase()
+    }
+    
     // Update local state immediately for responsive UI
     const updatedData = {
       ...collegeData,
-      [fieldName]: newValue
+      [fieldName]: processedValue
     }
     
     // Auto-calculate vacant when working, deputation, or vacant itself changes
@@ -158,7 +164,7 @@ const CollegeDashboard = () => {
           <br/>
           <small className="mt-2 d-block">
             <i className="fas fa-calculator me-1"></i>
-            <strong>Formula:</strong> Vacant = Sanctioned - Working - Deputation (auto-calculated when you edit Working or Deputation)
+            <strong>Note:</strong> Vacant can be manually edited or auto-calculated. When editing Working or Deputation, Vacant auto-adjusts. When editing Vacant directly, Working auto-adjusts.
           </small>
         </div>
 
