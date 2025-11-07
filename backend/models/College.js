@@ -49,8 +49,9 @@ const collegeSchema = new mongoose.Schema({
     },
     vacant: {
         type: Number,
-        required: true,
-        min: 0
+        required: false,  // Auto-calculated, not required on input
+        min: 0,
+        default: 0  // Default to 0, will be recalculated in pre-save hook
     },
     deputation: {
         type: Number,

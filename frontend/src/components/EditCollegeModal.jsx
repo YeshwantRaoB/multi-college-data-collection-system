@@ -18,6 +18,15 @@ const EditCollegeModal = ({ show, onHide, college, onSuccess }) => {
     }
   }, [college])
 
+  // Calculate vacant automatically
+  const calculateVacant = () => {
+    if (!college) return 0
+    const sanctioned = parseInt(college.sanctioned) || 0
+    const working = parseInt(formData.working) || 0
+    const deputation = parseInt(formData.deputation) || 0
+    return Math.max(0, sanctioned - working - deputation)
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData({
@@ -188,6 +197,25 @@ const EditCollegeModal = ({ show, onHide, college, onSuccess }) => {
                       onChange={handleChange}
                       required
                     />
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <div className="mb-3">
+                    <label htmlFor="vacant" className="form-label">
+                      Vacant <span className="badge bg-info">Auto-calculated</span>
+                    </label>
+                    <input
+                      type="number"
+                      className="form-control bg-light"
+                      id="vacant"
+                      value={calculateVacant()}
+                      readOnly
+                      disabled
+                      style={{ fontWeight: 'bold', fontSize: '1.1rem' }}
+                    />
+                    <small className="form-text text-muted">
+                      = {college?.sanctioned || 0} - {formData.working || 0} - {formData.deputation || 0}
+                    </small>
                   </div>
                 </div>
               </div>

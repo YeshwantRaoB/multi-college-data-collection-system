@@ -9,16 +9,27 @@ require('dotenv').config();
 
 const app = express();
 
+// Trust proxy - Required for Vercel/serverless deployments
+// This allows Express to correctly identify client IPs from X-Forwarded-For header
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// Rate limiting
+// Rate limiting with proper Vercel support
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // limit each IP to 100 requests per windowMs
-    message: 'Too many requests from this IP, please try again later.'
+    message: 'Too many requests from this IP, please try again later.',
+    standardHeaders: true, // Return rate limit info in headers
+    legacyHeaders: false, // Disable X-RateLimit-* headers
+    // Use IP from X-Forwarded-For (Vercel sets this)
+    keyGenerator: (req) => {
+        return req.ip || req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown';
+    },
+    skip: (req) => req.method === 'OPTIONS' // Skip CORS preflight
 });
 app.use('/api/', limiter);
 
@@ -27,6 +38,11 @@ const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 20, // limit each IP to 20 auth requests per windowMs (increased for development/testing)
     message: 'Too many authentication attempts, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => {
+        return req.ip || req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown';
+    },
     skip: (req) => req.method === 'OPTIONS' // Skip rate limiting for CORS preflight requests
 });
 app.use('/api/auth/login', authLimiter);

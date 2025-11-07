@@ -74,6 +74,14 @@ const AddCollegeModal = ({ show, onHide, onSuccess }) => {
     return Object.keys(newErrors).length === 0
   }
 
+  // Calculate vacant automatically
+  const calculateVacant = () => {
+    const sanctioned = parseInt(formData.sanctioned) || 0
+    const working = parseInt(formData.working) || 0
+    const deputation = parseInt(formData.deputation) || 0
+    return Math.max(0, sanctioned - working - deputation)
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData({
@@ -296,6 +304,26 @@ const AddCollegeModal = ({ show, onHide, onSuccess }) => {
               />
               {errors.deputation && <div className="invalid-feedback">{errors.deputation}</div>}
               <small className="form-text text-muted">Leave as 0 if no staff on deputation</small>
+            </div>
+          </div>
+          <div className="col-md-4">
+            <div className="mb-3">
+              <label htmlFor="vacant" className="form-label">
+                Vacant <span className="badge bg-info">Auto-calculated</span>
+              </label>
+              <input
+                type="number"
+                className="form-control bg-light"
+                id="vacant"
+                name="vacant"
+                value={calculateVacant()}
+                readOnly
+                disabled
+                style={{ fontWeight: 'bold', fontSize: '1.1rem' }}
+              />
+              <small className="form-text text-muted">
+                Formula: Sanctioned - Working - Deputation
+              </small>
             </div>
           </div>
         </div>
