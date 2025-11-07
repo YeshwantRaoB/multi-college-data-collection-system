@@ -75,15 +75,21 @@ router.post('/change-password', auth, async (req, res) => {
             return res.status(400).json({ message: 'Current password and new password are required' });
         }
 
+        // Fetch user with password (auth middleware excludes it)
+        const user = await User.findById(req.user._id).select('+password');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
         // Verify current password
-        const isMatch = await req.user.comparePassword(currentPassword);
+        const isMatch = await user.comparePassword(currentPassword);
         if (!isMatch) {
             return res.status(400).json({ message: 'Current password is incorrect' });
         }
 
         // Update password
-        req.user.password = newPassword;
-        await req.user.save();
+        user.password = newPassword;
+        await user.save();
 
         res.json({ message: 'Password changed successfully' });
     } catch (error) {

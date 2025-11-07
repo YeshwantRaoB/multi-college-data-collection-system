@@ -1,7 +1,12 @@
 const express = require('express');
 const XLSX = require('xlsx');
-const { jsPDF } = require('jspdf');
-require('jspdf-autotable');
+let jsPDF;
+try {
+    jsPDF = require('jspdf').jsPDF;
+    require('jspdf-autotable');
+} catch (error) {
+    console.warn('jsPDF not loaded, PDF export will be unavailable');
+}
 const College = require('../models/College');
 const { adminAuth, auth } = require('../middleware/auth');
 const router = express.Router();
@@ -153,6 +158,11 @@ router.get('/export/excel', auth, async (req, res) => {
 // Export to PDF
 router.get('/export/pdf', auth, async (req, res) => {
     try {
+        // Check if jsPDF is available
+        if (!jsPDF) {
+            return res.status(500).json({ message: 'PDF generation is currently unavailable' });
+        }
+
         const filters = req.query;
         const colleges = await getFilteredColleges(filters, req.user);
         

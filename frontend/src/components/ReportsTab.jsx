@@ -240,7 +240,7 @@ const ReportsTab = () => {
         </div>
       </div>
 
-      <div className="d-grid gap-2 d-md-flex justify-content-md-end mb-3">
+      <div className="d-grid gap-2 d-md-flex justify-content-md-end mb-3 btn-group-mobile">
         <button
           className="btn btn-success me-md-2"
           onClick={exportToExcel}
