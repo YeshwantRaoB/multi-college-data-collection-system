@@ -3,10 +3,11 @@ const College = require('../models/College');
 const UpdateLog = require('../models/UpdateLog');
 const { auth, adminAuth, collegeAuth } = require('../middleware/auth');
 const { validateBody, schemas } = require('../middleware/validate');
+const { createCache, clearCacheOnMutation } = require('../middleware/cache');
 const router = express.Router();
 
 // Get all colleges (admin only) with pagination
-router.get('/', adminAuth, async (req, res) => {
+router.get('/', adminAuth, createCache(30000), async (req, res) => {
     try {
         const page = Math.max(1, parseInt(req.query.page, 10) || 1);
         const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 25));
@@ -33,7 +34,7 @@ router.get('/', adminAuth, async (req, res) => {
 });
 
 // Get college by code
-router.get('/:collegeCode', auth, async (req, res) => {
+router.get('/:collegeCode', auth, createCache(30000), async (req, res) => {
     try {
         const college = await College.findOne({ collegeCode: req.params.collegeCode });
         
@@ -54,7 +55,7 @@ router.get('/:collegeCode', auth, async (req, res) => {
 });
 
 // Create new college (admin only) — apply validation
-router.post('/', adminAuth, validateBody(schemas.collegeCreate), async (req, res) => {
+router.post('/', adminAuth, clearCacheOnMutation('/colleges'), validateBody(schemas.collegeCreate), async (req, res) => {
     try {
         const {
             collegeCode,
@@ -115,7 +116,7 @@ router.post('/', adminAuth, validateBody(schemas.collegeCreate), async (req, res
 
 // Update college (admin can update all fields, college users only working and deputation)
 // apply validation (partial) for update
-router.put('/:collegeCode', auth, validateBody(schemas.collegeUpdate), async (req, res) => {
+router.put('/:collegeCode', auth, clearCacheOnMutation('/colleges'), validateBody(schemas.collegeUpdate), async (req, res) => {
     try {
         const college = await College.findOne({ collegeCode: req.params.collegeCode });
         
@@ -213,7 +214,7 @@ router.put('/:collegeCode', auth, validateBody(schemas.collegeUpdate), async (re
 });
 
 // Delete college (admin only)
-router.delete('/:collegeCode', adminAuth, async (req, res) => {
+router.delete('/:collegeCode', adminAuth, clearCacheOnMutation('/colleges'), async (req, res) => {
     try {
         const college = await College.findOne({ collegeCode: req.params.collegeCode });
         
@@ -242,7 +243,7 @@ router.delete('/:collegeCode', adminAuth, async (req, res) => {
 });
 
 // Get college data for current user (for college users)
-router.get('/user/current', collegeAuth, async (req, res) => {
+router.get('/user/current', collegeAuth, createCache(30000), async (req, res) => {
     try {
         const college = await College.findOne({ collegeCode: req.user.collegeCode });
         

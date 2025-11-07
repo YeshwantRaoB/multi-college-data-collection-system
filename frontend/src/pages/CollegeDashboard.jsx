@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import ChangePasswordModal from '../components/ChangePasswordModal'
 
 const CollegeDashboard = () => {
   const { currentUser, logout } = useAuth()
   const [collegeData, setCollegeData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false)
 
   useEffect(() => {
     loadCollegeData()
@@ -94,7 +96,7 @@ const CollegeDashboard = () => {
       {/* Navigation */}
       <nav className="navbar navbar-expand-lg navbar-dark" style={{ background: 'linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%)' }}>
         <div className="container">
-          <a className="navbar-brand fw-bold" href="#">
+          <a className="navbar-brand fw-bold" href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }} style={{ cursor: 'pointer' }}>
             <i className="fas fa-university me-2"></i>Multi-College Data System
           </a>
           <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -110,7 +112,9 @@ const CollegeDashboard = () => {
                   <i className="fas fa-user me-1"></i> {currentUser?.username}
                 </a>
                 <ul className="dropdown-menu">
-                  <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleLogout(); }}>Logout</a></li>
+                  <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); setShowChangePasswordModal(true); }}><i className="fas fa-key me-2"></i>Change Password</a></li>
+                  <li><hr className="dropdown-divider" /></li>
+                  <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleLogout(); }}><i className="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                 </ul>
               </li>
             </ul>
@@ -223,6 +227,14 @@ const CollegeDashboard = () => {
           </p>
         </div>
       </footer>
+
+      {/* Change Password Modal */}
+      {showChangePasswordModal && (
+        <ChangePasswordModal 
+          show={showChangePasswordModal}
+          onHide={() => setShowChangePasswordModal(false)}
+        />
+      )}
     </>
   )
 }

@@ -2,10 +2,11 @@ const express = require('express');
 const User = require('../models/User');
 const College = require('../models/College');
 const { adminAuth } = require('../middleware/auth');
+const { createCache, clearCacheOnMutation } = require('../middleware/cache');
 const router = express.Router();
 
 // Get all users (admin only)
-router.get('/', adminAuth, async (req, res) => {
+router.get('/', adminAuth, createCache(30000), async (req, res) => {
     try {
         const users = await User.find().select('-password').populate('collegeCode', 'collegeName');
         res.json(users);
@@ -16,7 +17,7 @@ router.get('/', adminAuth, async (req, res) => {
 });
 
 // Create new user (admin only)
-router.post('/', adminAuth, async (req, res) => {
+router.post('/', adminAuth, clearCacheOnMutation('/users'), async (req, res) => {
     try {
         const { username, password, collegeCode } = req.body;
 
@@ -55,7 +56,7 @@ router.post('/', adminAuth, async (req, res) => {
 });
 
 // Update user (admin only)
-router.put('/:userId', adminAuth, async (req, res) => {
+router.put('/:userId', adminAuth, clearCacheOnMutation('/users'), async (req, res) => {
     try {
         const { username, collegeCode, isActive } = req.body;
 
@@ -94,7 +95,7 @@ router.put('/:userId', adminAuth, async (req, res) => {
 });
 
 // Delete user (admin only)
-router.delete('/:userId', adminAuth, async (req, res) => {
+router.delete('/:userId', adminAuth, clearCacheOnMutation('/users'), async (req, res) => {
     try {
         const user = await User.findById(req.params.userId);
         
