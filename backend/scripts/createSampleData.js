@@ -142,7 +142,10 @@ const sampleUsers = [
 
 const createSampleData = async () => {
     try {
-        await mongoose.connect(process.env.MONGODB_URI);
+        await mongoose.connect(process.env.MONGODB_URI, {
+            serverSelectionTimeoutMS: 30000,
+            socketTimeoutMS: 45000,
+        });
         console.log('Connected to MongoDB');
 
         // Create sample colleges

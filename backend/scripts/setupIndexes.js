@@ -12,8 +12,8 @@ const setupDatabaseIndexes = async () => {
 
         console.log('📡 Connecting to MongoDB...');
         await mongoose.connect(process.env.MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 30000,
+            socketTimeoutMS: 45000,
         });
         console.log('✅ Connected to MongoDB\n');
 

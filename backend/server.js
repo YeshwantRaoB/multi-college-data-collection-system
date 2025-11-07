@@ -67,26 +67,80 @@ const corsOptions = {
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
 
+// MongoDB Connection with optimized configuration
+const { connectDB, setupConnectionListeners, checkDatabaseHealth } = require('./config/db');
+const { requestPerformanceMonitor, setupDatabaseMonitoring } = require('./middleware/performance');
+
 // Middleware
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
-.then(() => console.log('Connected to MongoDB Atlas'))
-.catch(err => console.error('MongoDB connection error:', err));
+// Performance monitoring (must be early in middleware chain)
+app.use(requestPerformanceMonitor);
 
-// Test route
-app.get('/api/health', (req, res) => {
+// Setup connection event listeners
+setupConnectionListeners();
+
+// Setup database query monitoring
+setupDatabaseMonitoring(mongoose);
+
+// Connect to MongoDB (with retry and timeout handling)
+connectDB().catch(err => {
+    console.error('Failed to connect to MongoDB on startup:', err.message);
+    // Server continues running - will retry on first request
+});
+
+// Middleware to ensure DB connection before processing requests
+// Important for serverless where connections can drop
+app.use('/api', async (req, res, next) => {
+    // Skip health checks to avoid circular dependency
+    if (req.path === '/health' || req.path === '/health/db') {
+        return next();
+    }
+    
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+        console.log('⚠️  DB disconnected, attempting to reconnect...');
+        try {
+            await connectDB();
+            next();
+        } catch (error) {
+            console.error('❌ Failed to reconnect to database:', error.message);
+            return res.status(503).json({
+                message: 'Database connection unavailable',
+                error: 'Please try again in a moment',
+                hint: 'If this persists, check MongoDB Atlas connection settings'
+            });
+        }
+    } else {
+        next();
+    }
+});
+
+// Health check routes
+app.get('/api/health', async (req, res) => {
+    const dbHealth = await checkDatabaseHealth();
     res.json({ 
-        status: 'OK', 
-        message: 'College Data System API is running',
+        status: dbHealth.status === 'healthy' ? 'OK' : 'DEGRADED',
+        message: 'College Data System API',
+        api: 'running',
+        database: dbHealth.status,
         timestamp: new Date().toISOString()
     });
+});
+
+// Detailed database health check
+app.get('/api/health/db', async (req, res) => {
+    const health = await checkDatabaseHealth();
+    res.json(health);
+});
+
+// Performance stats endpoint
+app.get('/api/health/performance', (req, res) => {
+    const { getPerformanceStats } = require('./middleware/performance');
+    const stats = getPerformanceStats();
+    res.json(stats);
 });
 
 // Import routes

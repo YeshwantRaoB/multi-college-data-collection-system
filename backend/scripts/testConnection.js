@@ -17,7 +17,8 @@ const testConnection = async () => {
         const startTime = Date.now();
         
         await mongoose.connect(process.env.MONGODB_URI, {
-            serverSelectionTimeoutMS: 10000, // 10 seconds timeout
+            serverSelectionTimeoutMS: 30000, // 30 seconds timeout (for serverless)
+            socketTimeoutMS: 45000,
         });
         
         const duration = Date.now() - startTime;
