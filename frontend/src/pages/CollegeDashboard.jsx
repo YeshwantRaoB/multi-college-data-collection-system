@@ -248,22 +248,47 @@ const CollegeDashboard = () => {
       </div>
 
       {/* Footer */}
-      <footer className="footer mt-5 py-3 bg-dark text-light">
-        <div className="container text-center">
-          <p className="mb-1">
-            <strong>Multi-College Data Collection & Management System</strong> ©
-            <span id="currentYear"></span>
-          </p>
-          <p className="mb-0">
-            Designed & Developed by
-            <a href="https://yrb-portfolio.netlify.app/" target="_blank" className="developer-link fw-bold ms-1">
-              Yeshwant Rao B
-            </a>
-            |
-            <a href="https://gpt.karnataka.gov.in/kptmangalore/public/en" target="_blank" className="college-link fw-bold ms-1">
-              Karnataka (Govt.) Polytechnic, Mangalore
-            </a>
-          </p>
+      <footer className="footer-modern mt-5">
+        <div className="footer-content">
+          <div className="container">
+            <div className="row align-items-center py-4">
+              <div className="col-md-4 text-center text-md-start mb-3 mb-md-0">
+                <h5 className="footer-title mb-2">
+                  <i className="fas fa-university me-2"></i>
+                  Multi-College System
+                </h5>
+                <p className="footer-subtitle mb-0">Data Management Excellence</p>
+              </div>
+              <div className="col-md-4 text-center mb-3 mb-md-0">
+                <div className="footer-guidance">
+                  <i className="fas fa-user-tie me-2"></i>
+                  <strong>Guided by:</strong> Mr. Sathish S<br/>
+                  <small>Lecturer, Department of Computer Science & Engineering</small>
+                </div>
+              </div>
+              <div className="col-md-4 text-center text-md-end">
+                <p className="footer-info mb-2">
+                  <i className="fas fa-code me-2"></i>
+                  <strong>Developed by:</strong>
+                  <a href="https://yrb-portfolio.netlify.app/" target="_blank" rel="noopener noreferrer" className="developer-link-modern ms-1">
+                    Yeshwant Rao B
+                  </a>
+                </p>
+                <p className="footer-college mb-0">
+                  <i className="fas fa-building me-2"></i>
+                  <a href="https://gpt.karnataka.gov.in/kptmangalore/public/en" target="_blank" rel="noopener noreferrer" className="college-link-modern">
+                    Karnataka Govt. Polytechnic, Mangalore
+                  </a>
+                </p>
+              </div>
+            </div>
+            <div className="footer-bottom text-center py-3">
+              <p className="mb-0">
+                <i className="fas fa-copyright me-1"></i>
+                <span id="currentYear"></span> All Rights Reserved | Made with <i className="fas fa-heart text-danger"></i> in India
+              </p>
+            </div>
+          </div>
         </div>
       </footer>
 

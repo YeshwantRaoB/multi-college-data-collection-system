@@ -1,11 +1,16 @@
 const express = require('express');
 const XLSX = require('xlsx');
 let jsPDF;
+let autoTableAvailable = false;
 try {
-    jsPDF = require('jspdf').jsPDF;
-    require('jspdf-autotable');
+    const jsPDFModule = require('jspdf');
+    jsPDF = jsPDFModule.jsPDF;
+    // Load autotable plugin
+    const autoTable = require('jspdf-autotable');
+    autoTableAvailable = true;
+    console.log('✅ jsPDF and autoTable loaded successfully');
 } catch (error) {
-    console.warn('jsPDF not loaded, PDF export will be unavailable');
+    console.warn('⚠️ jsPDF not loaded, PDF export will be unavailable:', error.message);
 }
 const College = require('../models/College');
 const { adminAuth, auth } = require('../middleware/auth');
@@ -158,8 +163,8 @@ router.get('/export/excel', auth, async (req, res) => {
 // Export to PDF
 router.get('/export/pdf', auth, async (req, res) => {
     try {
-        // Check if jsPDF is available
-        if (!jsPDF) {
+        // Check if jsPDF and autoTable are available
+        if (!jsPDF || !autoTableAvailable) {
             return res.status(500).json({ message: 'PDF generation is currently unavailable' });
         }
 
