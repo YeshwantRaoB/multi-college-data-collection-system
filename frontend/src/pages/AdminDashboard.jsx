@@ -233,7 +233,7 @@ const AdminDashboard = () => {
             <div className="footer-bottom text-center py-3">
               <p className="mb-0">
                 <i className="fas fa-copyright me-1"></i>
-                <span id="currentYear"></span> All Rights Reserved | Made with <i className="fas fa-heart text-danger"></i> in India
+                <span id="currentYear"></span> All Rights Reserved
               </p>
             </div>
           </div>
