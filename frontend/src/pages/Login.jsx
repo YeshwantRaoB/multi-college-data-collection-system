@@ -55,9 +55,9 @@ const Login = () => {
       <div className="login-page-wrapper">
         {/* Hero Section with Gradient Background */}
         <div className="login-hero-section">
-          <div className="container-fluid h-100">
-            <div className="row h-100 align-items-center justify-content-center">
-              <div className="col-lg-6 col-md-8 col-sm-10">
+          <div className="container-fluid h-100 d-flex align-items-center justify-content-center">
+            <div className="row w-100 justify-content-center align-items-center">
+              <div className="col-lg-6 col-md-8 col-sm-10 col-12">
                 <div className="login-card animate-scale-in">
                   <div className="login-card-header">
                     <div className="text-center">
